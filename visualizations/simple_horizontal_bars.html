@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<meta charset="utf-8">
+<html>
+  <head>
+    <title>D3 Playground</title>
+    <script src="../vendor/d3.js" charset="utf-8"></script>
+  </head>
+  <style>
+
+    #chart {
+      /* So we can see where the chart borders are: */
+      border: 1px solid black;
+    }
+    .bar-background {
+      margin-top: 17px;
+      background-color: #F0F3F2;
+      height: 30px;
+    }
+
+    .bar-background:first-of-type {
+      margin-top: 0;
+    }
+
+    .data-bar {
+      height: 30px;
+    }
+    /*
+      COLORS:
+
+      green: 5ECB00
+      blue: 01B9DA
+      orange: FF9100
+      yellow: FFD200
+      red: CD212E
+    */
+
+  </style>
+
+  <body>
+    <h1>Simple Horizontal Bars</h1>
+    <p class="description">Not exactly a bar chart. Here, we have several metrics that are measured on a percentage basis, where 100% on each metric is the ideal goal. The purpose of this graph is to show how the metrics compare to each other -- which ones are they doing good on, and which metrics need improvement?</p>
+
+    <h1>TODO: responsive.</h1>
+
+    <div class="content">
+        <div id="chart"></div>
+    </div>
+
+    <script>
+      var toPx = function(num) {
+        return num + "px";
+      }
+
+      var data = [
+        {x: 30, name: "Math", color: "#5ECB00"},
+        {x: 60, name: "English", color: "#01B9DA"},
+        {x: 12, name: "Chemistry", color: "#FF9100"},
+        {x: 80, name: "History", color: "#FFD200"},
+        {x: 30, name: "Art", color: "#CD212E"}
+      ];
+
+      var chartDim = {
+        width: 500,
+        height: 300
+      }
+
+      var margins = {
+        left: 50,
+        right: 50
+      }
+
+      var dimensions = {
+        width: chartDim.width - margins.left - margins.right,
+        height: chartDim.height
+      }
+
+
+
+      //ToDo: update this to be logarithmic transform of our actual data to the
+      // 0-100 range
+      // will have to play around with data to see how well this works
+      // maxX should really be the highest possible value on our scale
+      // for now we'll assume percentages and use 100;
+      var maxX = 100;
+
+      var xScale = d3.scale.linear()
+                    .domain([0, maxX])
+                    .range([0, dimensions.width]);
+
+      var chart = d3.select("#chart")
+        .style({
+          width: toPx(chartDim.width),
+          height: toPx(chartDim.height)
+        });
+
+      var backgroundBars = chart.selectAll("div")
+        .data(data)
+        .enter()
+          .append("div")
+          .attr("class", "bar-background")
+          .style("width", dimensions.width)
+            // now append the inner div that provides our data view.
+            // ToDo: the width of this should slide in on load, it would look cool
+            // would be an update transition
+
+      var dataBars = backgroundBars
+              .append("div")
+              .attr("class", "data-bar")
+              .style("width", function(d) {
+                return toPx(xScale(d.x));
+              })
+              .style("background-color", function(d) {
+                return d.color;
+              });
+    </script>
+  </body>
+</html>
+

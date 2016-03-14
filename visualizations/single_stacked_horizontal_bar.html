@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<meta charset="utf-8">
+<html>
+  <head>
+    <script src="../vendor/d3.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <script>
+    var dataset = [
+      {
+        type: 'oranges',
+        count: 3
+      }, {
+        type: 'strawberries',
+        count: 4
+      }, {
+        type: 'apples',
+        count: 5
+      }
+    ];
+
+    var margins = {
+      top: 60,
+      left: 50,
+      right: 50,
+      bottom: 60
+    }
+    var svgHeight = 180;
+    var svgWidth = 550;
+    var width = svgWidth - margins.left - margins.right;
+    var height = svgHeight - margins.top - margins.bottom;
+
+    // start out y0 at 0. we increment it below for each
+    // data item, so we know where to start each bar.
+    var y0 = 0;
+
+    dataset = dataset.map(function (d) {
+      //d3.layout.stack expects an array of arrays
+      //e.g., think of a stacked vertical bar chart.
+      var element = [{
+        x: d.type,
+        y: d.count,
+        y0: y0
+      }];
+
+      y0 = y0 + d.count; //set y0 for the next element.
+      return element;
+    });
+
+    // grab the sum of our data values
+    // for calculating percentage later (for display)
+    var sum = d3.sum(dataset, function(d) { return d[0].y; });
+
+    var stack = d3.layout.stack();
+    stack(dataset);
+
+    dataset = dataset.map(function (group) {
+      return group.map(function (d) {
+        // Invert the x and y values, and y0 becomes x0
+        return {
+          x: d.y,
+          y: d.x,
+          x0: d.y0
+        };
+      });
+    });
+
+
+    var xMax = d3.max(dataset, function (group) {
+      return d3.max(group, function (d) {
+        return d.x + d.x0;
+      });
+    });
+
+    var xScale = d3.scale.linear()
+      .domain([0, xMax])
+      .range([0, width]);
+
+    var colors = d3.scale.linear()
+      .domain([0, dataset.length])
+      .range(["grey", "black"]);
+
+
+    var svg = d3.select("body")
+      .append('svg')
+      .attr('width', svgWidth)
+      .attr('height', svgHeight)
+      .append('g');
+
+    var groups = svg.selectAll('g')
+      .data(dataset)
+      .enter()
+      .append('g')
+      .attr('fill', function(d,i) {
+        return colors(i)
+      });
+
+    var rects = groups.selectAll('rect')
+      .data(function (d) {
+        return d;
+      })
+      .enter()
+      .append('rect')
+      .attr('x', function (d) {
+        return xScale(d.x0) + margins.left;
+      })
+      .attr('y', margins.top)
+      .attr('height', height)
+      .attr('width', function (d) {
+        //set chart's width.
+        return xScale(d.x);
+      });
+
+    svg.selectAll("text")
+      .data(dataset)
+      .enter()
+      .append("text")
+      .text(function(d) {
+        var value = d[0].x;
+        // if value is 0, don't display a % value
+        // because we won't have an actual bar for it.
+        if(value == 0) { return "" }
+
+        var percent = Math.floor(value * 100 / sum);
+        return [percent, '%'].join("");
+      })
+      .attr('x', function(d,i) {
+        // `-12` accounts for width of the text;
+        // this will need to be updated if we change the font-size below.
+        return (xScale(d[0].x0) - - margins.left) + ( xScale(d[0].x) / 2 ) -12 ;
+      })
+      .attr('y', function() {
+        // `+4` accounts for height of text;
+        // change if you change font-size!
+        return (height / 2) + 4 + margins.top;
+      })
+      .attr('font-size', '.8em') //if this changes, also need to change x and y attrs.
+      .attr('fill', "white");
+    </script>
+  </body>
+</html>
+
+

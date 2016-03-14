@@ -1,0 +1,164 @@
+<!DOCTYPE HTML>
+<meta charset="utf-8">
+<html>
+  <head>
+    <script src="../vendor/d3.js" charset="utf-8"></script>
+  </head>
+  <style>
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+    .axis,
+    .label {
+      font-size: 12px;
+      fill: #555;
+    }
+
+    .guideLine {
+      stroke: #bbb;
+    }
+
+    /* This at least gives us some indication */
+    /* that there are two dots overlapping if they are */
+    circle {
+      opacity: 0.8;
+    }
+
+    .apple-fill {
+      fill: red;
+    }
+    .kiwi-fill {
+      fill: green;
+    }
+    .orange-fill {
+      fill: orange;
+    }
+  </style>
+  <body>
+
+  <script>
+  var dataset = [
+    {name: "Sarah",  data:[{type:'apple', count: 4}, {type: 'kiwi', count: 3}, {type: 'orange', count:5 }]},
+    {name: "Alice",  data:[{type: 'apple', count: 9}, {type: 'kiwi', count: 7}, {type: 'orange', count: 3 }]},
+    {name: "John",   data:[{type: 'apple', count: 1}, {type: 'kiwi', count: 5}, {type: 'orange', count: 4 }]},
+    {name: "Brian",  data:[{type: 'apple', count: 4}, {type: 'kiwi', count: 1}, {type: 'orange', count: 6 }]},
+    {name: "Alison", data:[{type: 'apple', count: 2}, {type: 'kiwi', count: 3.25}, {type: 'orange', count: 0.5 }]}
+  ];
+
+  var margin = {top: 20, right: 10, bottom: 10, left: 80},
+    width = 595 - margin.left - margin.right,
+    height = 350 - margin.top - margin.bottom;
+
+  //add a total value for each group
+  dataset.forEach(function(d) {
+    d.countsArr = d.data.map(function(v) { return v.count; });
+    d.total = d3.sum(d.countsArr);
+  });
+
+  dataset.sort(function(a, b) { return b.total - a.total; });
+
+  //create scales
+  var names = dataset.map(function(d) { return d.name; });
+  var yScale = d3.scale
+      .ordinal()
+      .rangePoints([height, margin.top + 20])
+      .domain(names);
+
+  var xScale = d3.scale
+      .linear()
+      .range([0, width])
+      .nice();
+
+  //get all the counts together so we can determine the extent.
+  var gatheredCountVals = dataset.map(function(d) {
+    return d.countsArr;
+  }).reduce(function(a, b) {
+    return a.concat(b);
+  });
+
+  var xDomain = [0, d3.max(gatheredCountVals)];
+  xScale.domain(xDomain);
+
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .orient("top")
+    .tickFormat(d3.format("d"));
+
+  // start putting stuff on the page finally
+  var svg = d3.select('body').append('svg')
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // add x-axis and label
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + margin.top +")")
+    .call(xAxis)
+  .append("text")
+    .attr("class", "label")
+    .attr("x", width/2)
+    .attr("y", - 20 )
+    .style("text-anchor", "middle")
+    .text("Fruit Count");
+
+  // add names to the left side of the chart
+  svg.selectAll('.names')
+      .data(dataset)
+    .enter()
+      .append("text")
+        .attr("class", "label")
+        .attr("y", function(d) {
+          return yScale(d.name);
+        })
+        .attr("x", -(margin.left - 15) )
+        .text(function(d) {
+          return d.name;
+        });
+
+  //create horizontal lines for each person in the chart:
+  var maxX = d3.max(xScale.range());
+  var minX = d3.min(xScale.range());
+
+  var guideLine = svg.selectAll(".guideLine")
+    .data(dataset)
+      .enter()
+    .append("svg:line")
+      .attr("x1", minX )
+      .attr("y1", function(d) {
+        return yScale(d.name)
+      })
+      .attr("x2", maxX )
+      .attr("y2", function(d) {
+        return yScale(d.name)
+      })
+      .attr("class","guideLine");
+
+  svg.selectAll(".indiv")
+      .data(dataset)
+    .enter()
+      .append("g")
+      .attr('class', "g")
+    .selectAll('.dot')
+      .data(function(d) { return d.data;})
+    .enter()
+      .append('circle')
+      .attr("class", "dot")
+      .attr('class', function(d) {
+        // for color styling
+        return d.type + "-fill";
+      })
+      .attr("r", 5)
+      .attr("cx", function(d) { return xScale(d.count); })
+      .attr("cy", function(f) {
+        // get the name of the individual and use the yScale to place the dot.
+        return yScale(this.parentNode.__data__.name);
+      });
+
+  </script>
+  </body>
+</html>

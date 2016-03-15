@@ -10,10 +10,15 @@
     #chart {
       /* So we can see where the chart borders are: */
       border: 1px solid black;
+      background-color: #eefefa;
+      fill: #eefefa;
     }
     .bar-background {
-      margin-top: 17px;
+      /* margin-top: 17px;
       background-color: #F0F3F2;
+      */
+
+      fill: #F0F3F2;
       height: 30px;
     }
 
@@ -24,8 +29,12 @@
     .data-bar {
       height: 30px;
     }
+    .label {
+      font-family: 'Helvetica';
+      fill: black;
+    }
     /*
-      COLORS:
+      MY COLORS:
 
       green: 5ECB00
       blue: 01B9DA
@@ -40,16 +49,18 @@
     <h1>Simple Horizontal Bars</h1>
     <p class="description">Not exactly a bar chart. Here, we have several metrics that are measured on a percentage basis, where 100% on each metric is the ideal goal. The purpose of this graph is to show how the metrics compare to each other -- which ones are they doing good on, and which metrics need improvement?</p>
 
-    <h1>TODO: responsive.</h1>
+    <ul>TODO:
+      <li>display labels</li>
+      <li>responsive & onload transition</li>
+      <li>use logarithmic data --> 0..100 scale (?)</li>
+    </ul>
 
-    <div class="content">
-        <div id="chart"></div>
-    </div>
+
+    <div id="chart"></div>
+
 
     <script>
-      var toPx = function(num) {
-        return num + "px";
-      }
+      var toPx = function(num) { return num + "px";}
 
       var data = [
         {x: 30, name: "Math", color: "#5ECB00"},
@@ -59,22 +70,22 @@
         {x: 30, name: "Art", color: "#CD212E"}
       ];
 
-      var chartDim = {
-        width: 500,
-        height: 300
-      }
-
       var margins = {
-        left: 50,
-        right: 50
+        left: 75,
+        right: 50,
+        top: 50,
+        bottom: 50
       }
 
+      var chartDim = {width: 500, height: 300 }
       var dimensions = {
         width: chartDim.width - margins.left - margins.right,
-        height: chartDim.height
+        height: chartDim.height - margins.top - margins.bottom
       }
 
-
+      var barDim = {
+        height: 30
+      }
 
       //ToDo: update this to be logarithmic transform of our actual data to the
       // 0-100 range
@@ -87,31 +98,67 @@
                     .domain([0, maxX])
                     .range([0, dimensions.width]);
 
-      var chart = d3.select("#chart")
+      //ToDo: Update graph to use yScale instead of manually setting bar thickness and padding
+      var yScale = d3.scale.linear()
+                     .domain([0, data.length])
+                     .range([0, chartDim.height]);
+
+      var chart = d3.select("#chart").append("svg")
         .style({
           width: toPx(chartDim.width),
           height: toPx(chartDim.height)
         });
 
-      var backgroundBars = chart.selectAll("div")
+      var groups = chart.selectAll("g")
         .data(data)
         .enter()
-          .append("div")
-          .attr("class", "bar-background")
-          .style("width", dimensions.width)
+          .append("g")
+          .attr("class", "bar")
+
+          var backgroundBars = groups.append("rect")
+            .attr("class", "bar-background")
+            .attr("width", chartDim.width)
+            .attr("x", margins.left)
+            .attr("y", function(d,i) {
+              return yScale(i);
+            })
             // now append the inner div that provides our data view.
             // ToDo: the width of this should slide in on load, it would look cool
             // would be an update transition
 
-      var dataBars = backgroundBars
-              .append("div")
+      var dataBars = groups.append("rect")
               .attr("class", "data-bar")
-              .style("width", function(d) {
+              .attr("x", margins.left)
+              .attr("y", function(d,i) {
+                return yScale(i);
+              })
+              .attr("height", barDim.height)
+              .attr("width", function(d) {
                 return toPx(xScale(d.x));
               })
-              .style("background-color", function(d) {
+              .attr("fill", function(d) {
                 return d.color;
-              });
+              })
+
+      var labels = groups.append("text")
+            .attr("class", "label")
+            .attr("x", function(d,i) {
+              //set x right against the bar expect for some padding;
+              // we'll align the end of the text against it
+              return margins.left - 10
+            })
+            //make it as wide as the margin
+            //.attr("width", margins.left)
+            .attr("y", function(d,i) {
+              //ToDo: How to more dynamically represent this?
+              return yScale(i) + 21;
+            })
+            .style("line-height", "30px")
+            .style("font-size", "14px")
+            .style("text-anchor", "end")
+            .text(function(d) {
+              return d.name
+            });
     </script>
   </body>
 </html>

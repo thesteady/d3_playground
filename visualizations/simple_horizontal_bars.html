@@ -4,12 +4,13 @@
   <head>
     <title>D3 Playground</title>
     <script src="../vendor/d3.js" charset="utf-8"></script>
+    <script src="https://code.jquery.com/jquery-2.2.2.min.js"   integrity="sha256-36cp2Co+/62rEAAYHLmRCPIych47CvdM+uTBJwSzWjI="   crossorigin="anonymous"></script>
   </head>
   <style>
 
     #chart {
       width: 800px;
-      height: 550px;
+      height: 600px;
     }
 
     .label {
@@ -43,6 +44,95 @@
     <script>
       var toPx = function(num) { return num + "px";}
 
+      var reportStrengths = function($chartWrapper, data) {
+        // set up basic dimensions
+        var chartDim = {
+          width: $chartWrapper.width(),
+          height: $chartWrapper.height()
+        }
+
+        var margins = { left: 75, right: 50, top: 0, bottom: 0 }
+
+        var dimensions = {
+          width: chartDim.width - margins.left - margins.right,
+          height: chartDim.height - margins.top - margins.bottom
+        }
+
+        var barHeight = dimensions.height / (data.length * 1.75);
+
+        //set up x and y scales
+        var xScale = d3.scale.linear()
+                       .domain([0, 100])
+                       .range([0, dimensions.width]);
+
+        // ToDo: Update graph to use yScale instead of manually setting bar thickness and padding
+        var yScale = d3.scale.linear()
+                       .domain([0, data.length])
+                       .range([0, dimensions.height]);
+
+        // start graphin'!
+        var chart = d3.select("#chart").append("svg")
+          .attr({
+            width: dimensions.width,
+            height: dimensions.height
+          })
+          .append("g")
+          .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+
+        var groups = chart.selectAll("g")
+          .data(data)
+          .enter()
+            .append("g")
+            .attr("class", "bar")
+
+        var labels = groups.append("text")
+          .attr("class", "label")
+          .attr("x", margins.left / 2)
+          .attr("y", function(d,i) {
+            return yScale(i) + (barHeight / 2);
+          })
+          .style("line-height", toPx(barHeight))
+          .style("font-size", "15px")
+          .style("text-anchor", "end")
+          .text(function(d) {
+            return d.name
+          });
+
+        var backgroundBars = groups.append("rect")
+          .attr("class", "bar-background")
+          .style("fill", "#F0F3F2")
+          .attr("x", margins.left)
+          .attr("y", function(d,i) {
+            return yScale(i);
+          })
+          .attr("height", barHeight)
+          .attr("width", 0)
+          .transition()
+          .duration(800)
+          .ease("quad")
+          .attr("width", dimensions.width)
+
+
+        var dataBars = groups.append("rect")
+          .attr("class", "data-bar")
+          .attr("x", margins.left)
+          .attr("y", function(d,i) {
+            return yScale(i);
+          })
+          .attr("fill", function(d) {
+            return d.color;
+          })
+          .attr("height", barHeight)
+          .attr("width", 0)
+          .transition()
+            .duration(1600)
+            .ease("quad")
+              .attr("width", function(d) {
+                return toPx(xScale(d.x));
+              });
+      }
+
+      // set up my data:
       var data = [
         {x: 30, name: "Math", color: "#5ECB00"},
         {x: 60, name: "English", color: "#01B9DA"},
@@ -51,94 +141,8 @@
         {x: 30, name: "Art", color: "#CD212E"}
       ];
 
-      var margins = {
-        left: 75,
-        right: 50,
-        top: 50,
-        bottom: 50
-      }
-
-      // only used to define the outer bounds of the chart area
-      // probably makes sense to update these to match whatever the current one.
-      var chartDim = {width: 800, height: 550 }
-
-      var dimensions = {
-        width: chartDim.width - margins.left - margins.right,
-        height: chartDim.height - margins.top - margins.bottom
-      }
-
-      var barHeight = 50
-
-
-      var xScale = d3.scale.linear()
-                    .domain([0, 100])
-                    .range([0, dimensions.width]);
-
-      // ToDo: Update graph to use yScale instead of manually setting bar thickness and padding
-      var yScale = d3.scale.linear()
-                     .domain([0, data.length])
-                     .range([0, dimensions.height]);
-
-      var chart = d3.select("#chart").append("svg")
-        .attr({
-          width: dimensions.width,
-          height: dimensions.height
-        })
-        .append("g")
-        .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
-
-      var groups = chart.selectAll("g")
-        .data(data)
-        .enter()
-          .append("g")
-          .attr("class", "bar")
-
-          var backgroundBars = groups.append("rect")
-            .attr("class", "bar-background")
-            .style("fill", "#F0F3F2")
-            .attr("height", barHeight)
-            .attr("width", dimensions.width)
-            .attr("x", margins.left)
-            .attr("y", function(d,i) {
-              return yScale(i);
-            })
-            // now append the inner div that provides our data view.
-            // ToDo: the width of this should slide in on load, it would look cool
-            // would be an update transition
-
-      var dataBars = groups.append("rect")
-              .attr("class", "data-bar")
-              .attr("x", margins.left)
-              .attr("y", function(d,i) {
-                return yScale(i);
-              })
-              .attr("height", barHeight)
-              .attr("width", function(d) {
-                return toPx(xScale(d.x));
-              })
-              .attr("fill", function(d) {
-                return d.color;
-              })
-
-      var labels = groups.append("text")
-            .attr("class", "label")
-            .attr("x", function(d,i) {
-              // set x right against the bar expect for some padding;
-              // we'll align the end of the text against it
-              return margins.left - 30
-            })
-            //make it as wide as the margin
-            //.attr("width", margins.left)
-            .attr("y", function(d,i) {
-              // ToDo: How to more dynamically represent this?
-              return yScale(i) + 30;
-            })
-            .style("line-height", toPx(barHeight))
-            .style("font-size", "15px")
-            .style("text-anchor", "end")
-            .text(function(d) {
-              return d.name
-            });
+      var $chartWrapper = $('#chart');
+      reportStrengths($chartWrapper, data);
     </script>
   </body>
 </html>

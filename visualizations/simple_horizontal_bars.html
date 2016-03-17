@@ -8,31 +8,15 @@
   <style>
 
     #chart {
-      /* So we can see where the chart borders are: */
-      border: 1px solid black;
-      background-color: #eefefa;
-      fill: #eefefa;
-    }
-    .bar-background {
-      /* margin-top: 17px;
-      background-color: #F0F3F2;
-      */
-
-      fill: #F0F3F2;
-      height: 30px;
+      width: 800px;
+      height: 550px;
     }
 
-    .bar-background:first-of-type {
-      margin-top: 0;
-    }
-
-    .data-bar {
-      height: 30px;
-    }
     .label {
       font-family: 'Helvetica';
       fill: black;
     }
+
     /*
       MY COLORS:
 
@@ -42,22 +26,19 @@
       yellow: FFD200
       red: CD212E
     */
-
   </style>
 
   <body>
     <h1>Simple Horizontal Bars</h1>
     <p class="description">Not exactly a bar chart. Here, we have several metrics that are measured on a percentage basis, where 100% on each metric is the ideal goal. The purpose of this graph is to show how the metrics compare to each other -- which ones are they doing good on, and which metrics need improvement?</p>
 
-    <ul>TODO:
-      <li>display labels</li>
+    TODO:
+    <ul>
       <li>responsive & onload transition</li>
       <li>use logarithmic data --> 0..100 scale (?)</li>
     </ul>
 
-
     <div id="chart"></div>
-
 
     <script>
       var toPx = function(num) { return num + "px";}
@@ -77,37 +58,34 @@
         bottom: 50
       }
 
-      var chartDim = {width: 500, height: 300 }
+      // only used to define the outer bounds of the chart area
+      // probably makes sense to update these to match whatever the current one.
+      var chartDim = {width: 800, height: 550 }
+
       var dimensions = {
         width: chartDim.width - margins.left - margins.right,
         height: chartDim.height - margins.top - margins.bottom
       }
 
-      var barDim = {
-        height: 30
-      }
+      var barHeight = 50
 
-      //ToDo: update this to be logarithmic transform of our actual data to the
-      // 0-100 range
-      // will have to play around with data to see how well this works
-      // maxX should really be the highest possible value on our scale
-      // for now we'll assume percentages and use 100;
-      var maxX = 100;
 
       var xScale = d3.scale.linear()
-                    .domain([0, maxX])
+                    .domain([0, 100])
                     .range([0, dimensions.width]);
 
-      //ToDo: Update graph to use yScale instead of manually setting bar thickness and padding
+      // ToDo: Update graph to use yScale instead of manually setting bar thickness and padding
       var yScale = d3.scale.linear()
                      .domain([0, data.length])
-                     .range([0, chartDim.height]);
+                     .range([0, dimensions.height]);
 
       var chart = d3.select("#chart").append("svg")
-        .style({
-          width: toPx(chartDim.width),
-          height: toPx(chartDim.height)
-        });
+        .attr({
+          width: dimensions.width,
+          height: dimensions.height
+        })
+        .append("g")
+        .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
 
       var groups = chart.selectAll("g")
         .data(data)
@@ -117,7 +95,9 @@
 
           var backgroundBars = groups.append("rect")
             .attr("class", "bar-background")
-            .attr("width", chartDim.width)
+            .style("fill", "#F0F3F2")
+            .attr("height", barHeight)
+            .attr("width", dimensions.width)
             .attr("x", margins.left)
             .attr("y", function(d,i) {
               return yScale(i);
@@ -132,7 +112,7 @@
               .attr("y", function(d,i) {
                 return yScale(i);
               })
-              .attr("height", barDim.height)
+              .attr("height", barHeight)
               .attr("width", function(d) {
                 return toPx(xScale(d.x));
               })
@@ -143,18 +123,18 @@
       var labels = groups.append("text")
             .attr("class", "label")
             .attr("x", function(d,i) {
-              //set x right against the bar expect for some padding;
+              // set x right against the bar expect for some padding;
               // we'll align the end of the text against it
-              return margins.left - 10
+              return margins.left - 30
             })
             //make it as wide as the margin
             //.attr("width", margins.left)
             .attr("y", function(d,i) {
-              //ToDo: How to more dynamically represent this?
-              return yScale(i) + 21;
+              // ToDo: How to more dynamically represent this?
+              return yScale(i) + 30;
             })
-            .style("line-height", "30px")
-            .style("font-size", "14px")
+            .style("line-height", toPx(barHeight))
+            .style("font-size", "15px")
             .style("text-anchor", "end")
             .text(function(d) {
               return d.name

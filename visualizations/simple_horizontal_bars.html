@@ -17,16 +17,21 @@
       font-family: 'Helvetica';
       fill: #4A4A4A;
     }
-
-    /*
-      MY COLORS:
-
-      green: 5ECB00
-      blue: 01B9DA
-      orange: FF9100
-      yellow: FFD200
-      red: CD212E
-    */
+    .math {
+      fill: #5ECB00;
+    }
+    .english {
+      fill: #01B9DA;
+    }
+    .chemistry {
+      fill: #FF9100
+    }
+    .history {
+      fill: #FFD200
+    }
+    .art {
+      fill: #CD212E
+    }
   </style>
 
   <body>
@@ -36,9 +41,10 @@
     <div id="chart"></div>
 
     <script>
-      var toPx = function(num) { return num + "px";}
+      var toPx = function(num) { return num + "px"; }
 
-      var reportStrengths = function($chartWrapper, data) {
+      var reportStrengths = function(chartWrapper, data) {
+        var $chartWrapper = $(chartWrapper);
         // set up basic dimensions
         var chartDim = {
           width: $chartWrapper.width(),
@@ -65,7 +71,7 @@
 
 
         // start graphin'!
-        var chart = d3.select("#chart").append("svg")
+        var chart = d3.select(chartWrapper).append("svg")
           .attr({
             //viewBox is min-x, min-y, width, height
             viewBox: [0, 0, dimensions.width, dimensions.height].join(" "),
@@ -109,13 +115,11 @@
 
 
         var dataBars = groups.append("rect")
-          .attr("class", "data-bar")
+          .attr("class", function(d) {
+            return ["data-bar", d.name.toLowerCase()].join(" ")})
           .attr("x", margins.left)
           .attr("y", function(d,i) {
             return yScale(i);
-          })
-          .attr("fill", function(d) {
-            return d.color;
           })
           .attr("height", barHeight)
           .attr("width", 0)
@@ -129,15 +133,14 @@
 
       // set up data:
       var data = [
-        {x: 30, name: "Math", color: "#5ECB00"},
-        {x: 60, name: "English", color: "#01B9DA"},
-        {x: 12, name: "Chemistry", color: "#FF9100"},
-        {x: 80, name: "History", color: "#FFD200"},
-        {x: 30, name: "Art", color: "#CD212E"}
+        { x: 30, name: "Math" },
+        { x: 60, name: "English" },
+        { x: 12, name: "Chemistry" },
+        { x: 80, name: "History" },
+        { x: 30, name: "Art" }
       ];
 
-      var $chartWrapper = $('#chart');
-      reportStrengths($chartWrapper, data);
+      reportStrengths('#chart', data);
     </script>
   </body>
 </html>

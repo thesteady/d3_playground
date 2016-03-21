@@ -41,8 +41,6 @@
     <div id="chart"></div>
 
     <script>
-      var toPx = function(num) { return num + "px"; }
-
       var reportStrengths = function(chartWrapper, data) {
         var $chartWrapper = $(chartWrapper);
         // set up basic dimensions
@@ -51,7 +49,7 @@
           height: $chartWrapper.height()
         }
 
-        var margins = { left: 75, right: 50, top: 0, bottom: 0 }
+        var margins = { left: 75, right: 50, top: 10, bottom: 0 }
 
         var dimensions = {
           width: chartDim.width - margins.left - margins.right,
@@ -59,16 +57,20 @@
         }
 
         var barHeight = dimensions.height / (data.length * 1.75);
+        var labelBufferWidth = 30;
+        var barWidthMax = dimensions.width - (margins.left + labelBufferWidth);
 
         // set up x and y scales
         var xScale = d3.scale.linear()
                        .domain([0, 100])
-                       .range([0, dimensions.width]);
+                       .rangeRound([0, barWidthMax]);
+
+        console.log(chartDim.width, dimensions.width, barWidthMax)
+
 
         var yScale = d3.scale.linear()
                        .domain([0, data.length])
-                       .range([0, dimensions.height]);
-
+                       .rangeRound([0, (dimensions.height)]);
 
         // start graphin'!
         var chart = d3.select(chartWrapper).append("svg")
@@ -78,7 +80,7 @@
             preserveAspectRatio: "xMinYMin meet"
           })
           .append("g")
-          .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+         .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
 
         var groups = chart.selectAll("g")
           .data(data)
@@ -88,11 +90,11 @@
 
         var labels = groups.append("text")
           .attr("class", "label")
-          .attr("x", margins.left / 2)
+          .attr("x", 0)
           .attr("y", function(d,i) {
             return yScale(i) + (barHeight / 2);
           })
-          .style("line-height", toPx(barHeight))
+          .style("line-height", barHeight)
           .style("font-size", "15px")
           .style("text-anchor", "end")
           .text(function(d) {
@@ -102,7 +104,7 @@
         var backgroundBars = groups.append("rect")
           .attr("class", "bar-background")
           .style("fill", "#F0F3F2")
-          .attr("x", margins.left)
+          .attr("x", labelBufferWidth)
           .attr("y", function(d,i) {
             return yScale(i);
           })
@@ -111,13 +113,13 @@
           .transition()
           .duration(800)
           .ease("quad")
-          .attr("width", dimensions.width)
+          .attr("width", barWidthMax)
 
 
         var dataBars = groups.append("rect")
           .attr("class", function(d) {
             return ["data-bar", d.name.toLowerCase()].join(" ")})
-          .attr("x", margins.left)
+          .attr("x", labelBufferWidth)
           .attr("y", function(d,i) {
             return yScale(i);
           })
@@ -127,17 +129,19 @@
             .duration(1600)
             .ease("quad")
               .attr("width", function(d) {
-                return toPx(xScale(d.x));
+                var length = xScale(d.x);
+                console.log(d.name, length);
+                return length;
               });
       }
 
       // set up data:
       var data = [
-        { x: 30, name: "Math" },
-        { x: 60, name: "English" },
-        { x: 12, name: "Chemistry" },
-        { x: 80, name: "History" },
-        { x: 30, name: "Art" }
+        { x: 0, name: "Math" },
+        { x: 10, name: "English" },
+        { x: 80, name: "Chemistry" },
+        { x: 87, name: "History" },
+        { x: 100, name: "Art" }
       ];
 
       reportStrengths('#chart', data);
